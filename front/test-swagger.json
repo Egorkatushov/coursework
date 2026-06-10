@@ -1,0 +1,243 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Test API для проверки",
+    "description": "Это тестовое API для проверки всех функций",
+    "version": "1.0.0",
+    "contact": {
+      "email": "test@example.com"
+    }
+  },
+  "host": "api.example.com",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "tags": [
+    {
+      "name": "users",
+      "description": "Операции с пользователями"
+    },
+    {
+      "name": "products",
+      "description": "Операции с товарами"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Получить список пользователей",
+        "description": "Возвращает список всех пользователей",
+        "operationId": "getUsers",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Количество записей",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 10
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Смещение",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": 0
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "400": {
+            "description": "Неверные параметры"
+          },
+          "500": {
+            "description": "Ошибка сервера"
+          }
+        }
+      },
+      "post": {
+        "tags": ["users"],
+        "summary": "Создать пользователя",
+        "description": "Создает нового пользователя",
+        "operationId": "createUser",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Данные пользователя",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Пользователь создан",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "description": "Неверные данные"
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Получить пользователя по ID",
+        "description": "Возвращает одного пользователя",
+        "operationId": "getUserById",
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "404": {
+            "description": "Пользователь не найден"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["users"],
+        "summary": "Удалить пользователя",
+        "description": "Удаляет пользователя по ID",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Успешное удаление"
+          },
+          "404": {
+            "description": "Пользователь не найден"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["products"],
+        "summary": "Список товаров",
+        "description": "Возвращает список товаров",
+        "operationId": "getProducts",
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Product"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "required": ["email", "name"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Уникальный идентификатор"
+        },
+        "name": {
+          "type": "string",
+          "description": "Имя пользователя",
+          "example": "Иван Иванов"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email пользователя",
+          "example": "ivan@example.com"
+        },
+        "age": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Возраст",
+          "minimum": 0,
+          "maximum": 150
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Активен ли пользователь",
+          "default": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Дата создания"
+        }
+      }
+    },
+    "Product": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "float"
+        },
+        "inStock": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "X-API-Key",
+      "in": "header"
+    }
+  }
+}

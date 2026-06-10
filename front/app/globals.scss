@@ -1,0 +1,20 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+pre {
+  background: #2d2d2d;
+  color: #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+
+.endpoint-get { color: #61affe; }
+.endpoint-post { color: #49cc90; }
+.endpoint-delete { color: #f93e3e; }
+.endpoint-put { color: #fca130; }

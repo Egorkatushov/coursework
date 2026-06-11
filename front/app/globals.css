@@ -14,7 +14,15 @@ pre {
   font-size: 0.85rem;
 }
 
-.endpoint-get { color: #61affe; }
-.endpoint-post { color: #49cc90; }
-.endpoint-delete { color: #f93e3e; }
-.endpoint-put { color: #fca130; }
+.endpoint-get {
+  color: #61affe;
+}
+.endpoint-post {
+  color: #49cc90;
+}
+.endpoint-delete {
+  color: #f93e3e;
+}
+.endpoint-put {
+  color: #fca130;
+}

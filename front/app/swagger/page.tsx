@@ -1,19 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Tabs, Tab, Box, TextField, Button, Alert, Typography, Paper } from '@mui/material';
+
+import { useState, useEffect, ChangeEvent, useCallback } from 'react';
+import {
+  Tabs,
+  Tab,
+  Box,
+  TextField,
+  Button,
+  Alert,
+  Typography,
+  Paper,
+} from '@mui/material';
 import SwaggerViewer from '../../components/SwaggerViewer';
 import { favoriteStore } from '../../stores/favoriteStore';
 import { appStore } from '../../stores/appStore';
-import { validateSwaggerSchema } from '../../utils/swaggerParser';
-import axios from 'axios';
+import { validateSwagger } from '../../utils/swaggerParser';
+import type { SwaggerSchema } from '../../types';
 
 export default function SwaggerPage() {
-  const [tab, setTab] = useState(0);
-  const [url, setUrl] = useState('');
-  const [jsonText, setJsonText] = useState('');
-  const [schema, setSchema] = useState(null);
-  const [error, setError] = useState(null);
-  const [validationErrors, setValidationErrors] = useState([]);
+  const [tab, setTab] = useState<number>(0);
+  const [url, setUrl] = useState<string>('');
+  const [jsonText, setJsonText] = useState<string>('');
+  const [schema, setSchema] = useState<SwaggerSchema | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const saved = appStore.currentSchema;
@@ -27,13 +37,14 @@ export default function SwaggerPage() {
     try {
       setError(null);
       setValidationErrors([]);
-      const res = await axios.get(url);
-      const errors = validateSwaggerSchema(res.data);
+      const res = await fetch(url);
+      const data = await res.json();
+      const errors = validateSwagger(data);
       if (errors.length > 0) {
         setValidationErrors(errors);
       }
-      setSchema(res.data);
-    } catch (e) {
+      setSchema(data);
+    } catch {
       setError('Ошибка загрузки URL. Проверьте ссылку и CORS.');
     }
   };
@@ -42,19 +53,20 @@ export default function SwaggerPage() {
     try {
       setError(null);
       setValidationErrors([]);
-      const parsed = JSON.parse(jsonText);
-      const errors = validateSwaggerSchema(parsed);
+      const parsed = JSON.parse(jsonText) as SwaggerSchema;
+      const errors = validateSwagger(parsed);
       if (errors.length > 0) {
         setValidationErrors(errors);
       }
       setSchema(parsed);
     } catch (e) {
-      setError(`Ошибка парсинга JSON: ${e.message}`);
+      const errorMessage = e instanceof Error ? e.message : 'Неизвестная ошибка';
+      setError(`Ошибка парсинга JSON: ${errorMessage}`);
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
@@ -62,14 +74,15 @@ export default function SwaggerPage() {
       try {
         setError(null);
         setValidationErrors([]);
-        const parsed = JSON.parse(ev.target.result);
-        const errors = validateSwaggerSchema(parsed);
+        const parsed = JSON.parse(ev.target?.result as string) as SwaggerSchema;
+        const errors = validateSwagger(parsed);
         if (errors.length > 0) {
           setValidationErrors(errors);
         }
         setSchema(parsed);
       } catch (e) {
-        setError(`Ошибка в файле: ${e.message}`);
+        const errorMessage = e instanceof Error ? e.message : 'Неизвестная ошибка';
+        setError(`Ошибка в файле: ${errorMessage}`);
       }
     };
     reader.onerror = () => {
@@ -78,11 +91,15 @@ export default function SwaggerPage() {
     reader.readAsText(file);
   };
 
-  const handleSaveToFavorites = () => {
-    const name = schema?.info?.title || 'Новая схема';
+  const handleSaveToFavorites = useCallback(() => {
+    if (!schema) {
+      alert('Нет загруженной схемы для сохранения');
+      return;
+    }
+    const name = schema.info?.title || 'Новая схема';
     favoriteStore.addFavorite(name, schema);
     alert('Схема сохранена в избранное!');
-  };
+  }, [schema]);
 
   return (
       <Box>
@@ -94,7 +111,7 @@ export default function SwaggerPage() {
         </Typography>
 
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 3 }}>
+          <Tabs value={tab} onChange={(_e, v) => setTab(v)} sx={{ mb: 3 }}>
             <Tab label="По ссылке" />
             <Tab label="Файл" />
             <Tab label="Текст JSON" />
@@ -109,14 +126,20 @@ export default function SwaggerPage() {
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder="https://petstore.swagger.io/v2/swagger.json"
                 />
-                <Button variant="contained" onClick={handleLoadUrl}>Загрузить</Button>
+                <Button variant="contained" onClick={handleLoadUrl}>
+                  Загрузить
+                </Button>
               </Box>
           )}
 
           {tab === 1 && (
               <Box>
                 <input type="file" accept=".json" onChange={handleFileUpload} />
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 1 }}
+                >
                   Поддерживаются .json файлы со Swagger/OpenAPI схемой
                 </Typography>
               </Box>
@@ -130,11 +153,11 @@ export default function SwaggerPage() {
                     rows={8}
                     value={jsonText}
                     onChange={(e) => setJsonText(e.target.value)}
-                    placeholder='{
+                    placeholder={`{
   "swagger": "2.0",
   "info": { ... },
   "paths": { ... }
-}'
+}`}
                 />
                 <Button sx={{ mt: 2 }} variant="contained" onClick={handleParseJson}>
                   Парсить JSON

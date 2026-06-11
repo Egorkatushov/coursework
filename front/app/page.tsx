@@ -1,22 +1,27 @@
 'use client';
-import { useEffect } from 'react';
+
+import { useEffect, useCallback } from 'react';
 import { Typography, Grid, Card, CardContent, CardActions, Button, Box } from '@mui/material';
 import { observer } from 'mobx-react-lite';
 import { favoriteStore } from '../stores/favoriteStore';
 import { appStore } from '../stores/appStore';
 import { useRouter } from 'next/navigation';
+import type { SwaggerSchema } from '../types';
 
 export default observer(function HomePage() {
     const router = useRouter();
 
     useEffect(() => {
-        favoriteStore.fetchFavorites();
+        const loadFavorites = async () => {
+            await favoriteStore.fetchFavorites();
+        };
+        loadFavorites();
     }, []);
 
-    const openSchema = (schema) => {
+    const openSchema = useCallback((schema: SwaggerSchema) => {
         appStore.setCurrentSchema(schema);
         router.push('/swagger');
-    };
+    }, [router]);
 
     return (
         <Box>
@@ -49,7 +54,11 @@ export default observer(function HomePage() {
                                 <Button size="small" onClick={() => openSchema(fav.schema)}>
                                     Открыть
                                 </Button>
-                                <Button size="small" color="error" onClick={() => favoriteStore.removeFavorite(fav.id)}>
+                                <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={() => favoriteStore.removeFavorite(fav.id)}
+                                >
                                     Удалить
                                 </Button>
                             </CardActions>

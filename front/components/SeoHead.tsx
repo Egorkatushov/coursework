@@ -1,6 +1,18 @@
 import Head from 'next/head';
 
-export default function SeoHead({ title, description, keywords, noIndex = false }) {
+interface SeoHeadProps {
+    title?: string;
+    description?: string;
+    keywords?: string;
+    noIndex?: boolean;
+}
+
+export default function SeoHead({
+                                    title,
+                                    description,
+                                    keywords,
+                                    noIndex = false
+                                }: SeoHeadProps) {
     const siteTitle = 'EduSwagger - Swagger и SQL визуализатор';
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
     const fullDescription = description || 'Визуализация Swagger схем и SQL баз данных с возможностью сохранения в избранное';

@@ -1,27 +1,24 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Typography, Grid, Card, CardContent, CardActions, Button, Box } from '@mui/material';
 import { observer } from 'mobx-react-lite';
-import { favoriteStore } from '../stores/favoriteStore';
-import { appStore } from '../stores/appStore';
+import { favoriteStore } from '@/stores/favoriteStore';
+import { appStore } from '@/stores/appStore';
 import { useRouter } from 'next/navigation';
-import type { SwaggerSchema } from '../types';
+import type { SwaggerSchema } from '@/types';
 
 export default observer(function HomePage() {
     const router = useRouter();
 
     useEffect(() => {
-        const loadFavorites = async () => {
-            await favoriteStore.fetchFavorites();
-        };
-        loadFavorites();
+        favoriteStore.fetchFavorites();
     }, []);
 
-    const openSchema = useCallback((schema: SwaggerSchema) => {
+    const openSchema = (schema: SwaggerSchema) => {
         appStore.setCurrentSchema(schema);
         router.push('/swagger');
-    }, [router]);
+    };
 
     return (
         <Box>

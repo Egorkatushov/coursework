@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import { SwaggerSchema } from '@/types'
+import { SwaggerSchema } from '../types'
 
 class AppStore {
     currentSchema: SwaggerSchema | null = null

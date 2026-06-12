@@ -1,36 +1,25 @@
-'use client';
-
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
-import { observer } from 'mobx-react-lite';
-import { themeStore } from '../stores/themeStore';
-import ThemeToggle from '../components/ThemeToggle';
+// app/layout.tsx
+import { Metadata } from 'next';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { AppBar, Toolbar, Typography, Container, Box } from '@mui/material';
 import Link from 'next/link';
-import SeoHead from '../components/SeoHead';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import './globals.css';
 
-export default observer(function RootLayout({
-                                                children,
-                                            }: {
-    children: React.ReactNode;
-}) {
-    const theme = createTheme({
-        palette: {
-            mode: themeStore.darkMode ? 'dark' : 'light',
-        },
-    });
+export const metadata: Metadata = {
+    title: {
+        default: 'EduSwagger - Визуализатор Swagger и SQL',
+        template: '%s | EduSwagger',
+    },
+    description: 'Веб-приложение для визуализации Swagger/OpenAPI спецификаций и SQL схем',
+};
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="ru">
-        <SeoHead />
         <body>
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
+        <ThemeProvider>
+            {/* Навигация */}
             <AppBar position="static">
                 <Toolbar>
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -49,11 +38,9 @@ export default observer(function RootLayout({
                     <ThemeToggle />
                 </Toolbar>
             </AppBar>
-            <Container sx={{ py: 4 }}>
-                {children}
-            </Container>
+            <Container sx={{ py: 4 }}>{children}</Container>
         </ThemeProvider>
         </body>
         </html>
     );
-});
+}

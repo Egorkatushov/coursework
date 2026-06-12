@@ -1,4 +1,4 @@
-import type { SqlTable, SqlLink, SqlColumn, SqlParseResult } from '../types';
+import type { SqlTable, SqlLink, SqlColumn, SqlParseResult } from '../../types';
 
 export function parseSQL(sqlContent: string): SqlParseResult {
     const tables: SqlTable[] = [];
@@ -16,6 +16,7 @@ export function parseSQL(sqlContent: string): SqlParseResult {
         const tableContent = match[2];
         const columns = parseColumns(tableContent, notNullRegex, primaryKeyInlineRegex);
 
+        // Поиск составного PRIMARY KEY
         const pkMatch = primaryKeyRegex.exec(tableContent);
         if (pkMatch) {
             const pkColumns = pkMatch[1].split(',').map(c => c.trim());
@@ -131,6 +132,7 @@ function detectImplicitRelations(tables: SqlTable[], links: SqlLink[]): void {
         for (const column of table.columns) {
             if (column.name.endsWith('_id') && column.name !== 'id' && !column.isForeignKey) {
                 let targetTableName = column.name.replace(/_id$/, '');
+
 
                 const targetTable = tables.find(
                     t =>

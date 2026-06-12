@@ -1,97 +1,34 @@
 'use client';
 
-import { useState, useEffect, ChangeEvent, useCallback } from 'react';
-import {
-  Tabs,
-  Tab,
-  Box,
-  TextField,
-  Button,
-  Alert,
-  Typography,
-  Paper,
-} from '@mui/material';
-import SwaggerViewer from '../../components/SwaggerViewer';
-import { favoriteStore } from '../../stores/favoriteStore';
-import { appStore } from '../../stores/appStore';
-import { validateSwagger } from '../../utils/swaggerParser';
-import type { SwaggerSchema } from '../../types';
+import { useEffect } from 'react';
+import { Box, Typography, Button } from '@mui/material';
+import { observer } from 'mobx-react-lite';
+import { SwaggerUploader, SwaggerViewer } from '@/components/Swagger';
+import { useSwaggerLoader } from '@/hooks/useSwaggerLoader';
+import { favoriteStore } from '@/stores/favoriteStore';
+import { appStore } from '@/stores/appStore';
 
-export default function SwaggerPage() {
-  const [tab, setTab] = useState<number>(0);
-  const [url, setUrl] = useState<string>('');
-  const [jsonText, setJsonText] = useState<string>('');
-  const [schema, setSchema] = useState<SwaggerSchema | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+export default observer(function SwaggerPage() {
+  const {
+    schema,
+    isLoading,
+    error,
+    validationErrors,
+    loadFromUrl,
+    loadFromJsonString,
+    loadFromFile,
+  } = useSwaggerLoader();
 
+  // Загрузка сохраненной схемы из избранного
   useEffect(() => {
     const saved = appStore.currentSchema;
     if (saved) {
-      setSchema(saved);
+      loadFromJsonString(JSON.stringify(saved));
       appStore.clearCurrentSchema();
     }
-  }, []);
+  }, [loadFromJsonString]);
 
-  const handleLoadUrl = async () => {
-    try {
-      setError(null);
-      setValidationErrors([]);
-      const res = await fetch(url);
-      const data = await res.json();
-      const errors = validateSwagger(data);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      }
-      setSchema(data);
-    } catch {
-      setError('Ошибка загрузки URL. Проверьте ссылку и CORS.');
-    }
-  };
-
-  const handleParseJson = () => {
-    try {
-      setError(null);
-      setValidationErrors([]);
-      const parsed = JSON.parse(jsonText) as SwaggerSchema;
-      const errors = validateSwagger(parsed);
-      if (errors.length > 0) {
-        setValidationErrors(errors);
-      }
-      setSchema(parsed);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Неизвестная ошибка';
-      setError(`Ошибка парсинга JSON: ${errorMessage}`);
-    }
-  };
-
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        setError(null);
-        setValidationErrors([]);
-        const parsed = JSON.parse(ev.target?.result as string) as SwaggerSchema;
-        const errors = validateSwagger(parsed);
-        if (errors.length > 0) {
-          setValidationErrors(errors);
-        }
-        setSchema(parsed);
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Неизвестная ошибка';
-        setError(`Ошибка в файле: ${errorMessage}`);
-      }
-    };
-    reader.onerror = () => {
-      setError('Ошибка при чтении файла');
-    };
-    reader.readAsText(file);
-  };
-
-  const handleSaveToFavorites = useCallback(() => {
+  const handleSaveToFavorites = () => {
     if (!schema) {
       alert('Нет загруженной схемы для сохранения');
       return;
@@ -99,7 +36,7 @@ export default function SwaggerPage() {
     const name = schema.info?.title || 'Новая схема';
     favoriteStore.addFavorite(name, schema);
     alert('Схема сохранена в избранное!');
-  }, [schema]);
+  };
 
   return (
       <Box>
@@ -110,78 +47,14 @@ export default function SwaggerPage() {
           Загрузите Swagger/OpenAPI схему для просмотра структуры API
         </Typography>
 
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Tabs value={tab} onChange={(_e, v) => setTab(v)} sx={{ mb: 3 }}>
-            <Tab label="По ссылке" />
-            <Tab label="Файл" />
-            <Tab label="Текст JSON" />
-          </Tabs>
-
-          {tab === 0 && (
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                    fullWidth
-                    size="small"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://petstore.swagger.io/v2/swagger.json"
-                />
-                <Button variant="contained" onClick={handleLoadUrl}>
-                  Загрузить
-                </Button>
-              </Box>
-          )}
-
-          {tab === 1 && (
-              <Box>
-                <input type="file" accept=".json" onChange={handleFileUpload} />
-                <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 1 }}
-                >
-                  Поддерживаются .json файлы со Swagger/OpenAPI схемой
-                </Typography>
-              </Box>
-          )}
-
-          {tab === 2 && (
-              <Box>
-                <TextField
-                    fullWidth
-                    multiline
-                    rows={8}
-                    value={jsonText}
-                    onChange={(e) => setJsonText(e.target.value)}
-                    placeholder={`{
-  "swagger": "2.0",
-  "info": { ... },
-  "paths": { ... }
-}`}
-                />
-                <Button sx={{ mt: 2 }} variant="contained" onClick={handleParseJson}>
-                  Парсить JSON
-                </Button>
-              </Box>
-          )}
-
-          {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-          )}
-
-          {validationErrors.length > 0 && (
-              <Alert severity="warning" sx={{ mt: 2 }}>
-                <Typography variant="subtitle2">Найдены проблемы в схеме:</Typography>
-                <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-                  {validationErrors.map((err, idx) => (
-                      <li key={idx}>{err}</li>
-                  ))}
-                </ul>
-              </Alert>
-          )}
-        </Paper>
+        <SwaggerUploader
+            isLoading={isLoading}
+            error={error}
+            validationErrors={validationErrors}
+            onLoadFromUrl={loadFromUrl}
+            onLoadFromJsonString={loadFromJsonString}
+            onLoadFromFile={loadFromFile}
+        />
 
         {schema && (
             <Box>
@@ -198,4 +71,4 @@ export default function SwaggerPage() {
         )}
       </Box>
   );
-}
+});
